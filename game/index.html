@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#101f28" />
+    <meta name="description" content="Ngắm, bắn và làm đổ những chồng gốm trong trò chơi vật lý 3D." />
+    <title>Lò Gốm Náo Nhiệt</title>
+    <script type="module" crossorigin src="./assets/index-Bq1zZmXf.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-DkpRaDnE.css">
+  </head>
+  <body>
+    <main class="game">
+      <div id="arena" aria-label="Sân chơi 3D"></div>
+      <div class="game-header">
+        <header class="top">
+          <div class="brand">
+            <span class="brand-mark" aria-hidden="true">✦</span>
+            <h1>Lò Gốm<br />Náo Nhiệt</h1>
+          </div>
+          <div class="tools">
+            <button id="sound" type="button" aria-pressed="true">Tắt tiếng</button>
+            <button id="reset" type="button" title="Chơi lại (R)">Chơi lại <kbd>R</kbd></button>
+          </div>
+        </header>
+        <section class="hud" aria-label="Tiến độ màn">
+          <div><span>Màn <b id="level-number">01</b></span><strong id="level-name">Sân phơi gốm</strong></div>
+          <div><span>Đạn còn</span><strong id="shots">0</strong><div id="ammo" aria-hidden="true"></div></div>
+          <div><span>Mục tiêu</span><strong id="targets">0</strong><small id="stage"></small></div>
+        </section>
+      </div>
+      <footer class="bottom">
+        <p id="hint" role="status">Chạm vào mục tiêu để bắn</p>
+        <div class="controls">
+          <label class="control-field">
+            <span>Màn chơi</span>
+            <select id="levels"></select>
+          </label>
+          <label class="control-field">
+            <span>Lực bắn</span>
+            <select id="shot-speed">
+              <option value="11">Nhẹ</option>
+              <option value="24" selected>Chuẩn</option>
+              <option value="30">Mạnh</option>
+            </select>
+          </label>
+          <button id="view-mode" type="button" aria-pressed="true" aria-keyshortcuts="V" disabled>
+            Góc thứ nhất <kbd aria-hidden="true">V</kbd>
+          </button>
+        </div>
+      </footer>
+      <dialog id="result" aria-labelledby="result-title">
+        <div class="result-mark" aria-hidden="true">✦</div>
+        <h2 id="result-title"></h2>
+        <p id="result-detail"></p>
+        <div class="result-actions">
+          <button id="retry" type="button">Chơi lại</button>
+          <button id="next" type="button">Màn tiếp theo</button>
+        </div>
+      </dialog>
+      <div id="error" hidden role="alert">Trình duyệt chưa khởi tạo được WebGL. Hãy bật tăng tốc phần cứng rồi tải lại trang.</div>
+    </main>
+  </body>
+</html>
