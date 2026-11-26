@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Kiểm tra va chạm và mẫu hư hại của mục tiêu 3D trong Lò Gốm Náo Nhiệt." />
   <title>Thử va chạm · Xưởng Asset 3D</title>
-  <script type="module" crossorigin src="./assets/impact-BOzn4eAO.js"></script>
+  <script type="module" crossorigin src="./assets/impact-D2xJtB7c.js"></script>
   <link rel="modulepreload" crossorigin href="./assets/style-Nk_e52yN.js">
   <link rel="stylesheet" crossorigin href="./assets/style-CUBKwT7t.css">
 </head>
@@ -32,13 +32,8 @@
           <label for="target">Chọn vật thể</label>
           <select id="target"></select>
           <label for="layout">Bố cục xếp vật</label>
-          <select id="layout">
-            <option value="single">Một vật</option>
-            <option value="row">Hàng domino</option>
-            <option value="tower">Tháp 4–3–2</option>
-            <option value="steps">Bậc thang lệch</option>
-            <option value="cascade">Cụm hỗn hợp</option>
-          </select>
+          <select id="layout"></select>
+          <p id="layout-note" class="impact-state" hidden></p>
           <p id="aim-note">Chạm vào thân hoặc mép vật để ngắm, rồi bấm Bắn.</p>
         </section>
         <section class="motion">
@@ -46,8 +41,8 @@
           <label for="shot-speed">Lực bắn</label>
           <select id="shot-speed">
             <option value="11">Nhẹ · 11 m/s</option>
-            <option value="23" selected>Chuẩn · 23 m/s</option>
-            <option value="28">Mạnh · 28 m/s</option>
+            <option value="24" selected>Chuẩn · 24 m/s</option>
+            <option value="30">Mạnh · 30 m/s</option>
           </select>
           <div class="playback" id="controls">
             <button id="reset" disabled>Đặt lại</button>
