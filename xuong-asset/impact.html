@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Kiểm tra va chạm và mẫu hư hại của mục tiêu 3D trong Lò Gốm Náo Nhiệt." />
+  <title>Thử va chạm · Xưởng Asset 3D</title>
+</head>
+<body>
+  <main class="workshop">
+    <header class="masthead">
+      <div class="wordmark"><span aria-hidden="true">✦</span> Thử va chạm</div>
+      <a class="download" href="./">Về xưởng</a>
+    </header>
+    <div class="layout">
+      <section class="stage" aria-label="Mô phỏng mục tiêu 3D">
+        <div id="viewport" aria-label="Kéo để xoay mô hình"></div>
+        <p id="loader" role="status">Đang tải mô hình…</p>
+        <p id="orbit-hint">Kéo để xoay · Cuộn hoặc chụm để thu phóng</p>
+      </section>
+      <aside class="details">
+        <section class="intro">
+          <p class="type">MỤC TIÊU TRONG GAME</p>
+          <h1 class="impact-title">Phản ứng khi trúng đạn</h1>
+          <label for="target">Chọn vật thể</label>
+          <select id="target"></select>
+          <label for="layout">Bố cục xếp vật</label>
+          <select id="layout">
+            <option value="single">Một vật</option>
+            <option value="row">Hàng domino</option>
+            <option value="tower">Tháp 4–3–2</option>
+            <option value="steps">Bậc thang lệch</option>
+          </select>
+          <p>Chạm vào vật để chọn điểm ngắm, rồi bấm Bắn. Các vật đứng sát nhau có thể làm đổ cả cụm.</p>
+        </section>
+        <section class="motion">
+          <h2>Mô phỏng</h2>
+          <div class="playback" id="controls">
+            <button id="reference-shot" disabled>Chạy cảnh tham chiếu</button>
+            <button id="shoot" disabled>Bắn</button>
+            <button id="reset" disabled>Đặt lại</button>
+            <button id="slow" type="button" aria-pressed="false">Phát chậm</button>
+            <button id="sound" type="button" aria-pressed="true">Âm thanh</button>
+          </div>
+          <p id="state" class="impact-state" role="status"></p>
+        </section>
+        <section class="motion">
+          <h2>Đối chiếu GLB</h2>
+          <div class="playback">
+            <button id="intact" aria-pressed="true" disabled>Mẫu nguyên</button>
+            <button id="damaged" aria-pressed="false" disabled>Mẫu hư hại</button>
+          </div>
+          <p id="filename" class="impact-state"></p>
+        </section>
+      </aside>
+    </div>
+    <section class="replay motion" aria-labelledby="replay-title">
+      <h2 id="replay-title">Tua từng trạng thái</h2>
+      <p class="impact-state" id="trace-status" role="status">Bắn một phát để ghi lại diễn biến trong mô phỏng.</p>
+      <div class="playback replay-controls">
+        <button type="button" id="trace-play" disabled>Phát lại</button>
+        <input type="range" id="trace-time" aria-label="Tua lượt bắn" min="0" max="0" value="0" disabled />
+        <output id="trace-clock" for="trace-time">0,00 giây</output>
+        <button type="button" id="trace-live" disabled>Về mô phỏng</button>
+      </div>
+      <ol id="trace-events" aria-label="Mốc trạng thái trong mô phỏng"></ol>
+      <p class="impact-state" id="trace-detail"></p>
+      <details class="reference-notes">
+        <summary>Quan sát từ video tham chiếu</summary>
+        <dl>
+          <div><dt>18,63–19,23 giây</dt><dd>Đạn chạm mép phải sau khoảng 0,07 giây. Phần xanh mất điểm đỡ, rơi qua mép bàn và chạm cát khoảng 0,6 giây sau cú bắn.</dd></div>
+          <div><dt>21,47–22,47 giây</dt><dd>Thanh dài bắt đầu xoay khoảng 0,08 giây sau khi bắn. Nó đẩy vật liền kề rồi chạm cát sau khoảng 0,9–1,0 giây.</dd></div>
+          <div><dt>Sau khi chạm cát</dt><dd>Các mảnh bắn thấp, giữ một phần chuyển động ngang rồi lăn hoặc trượt một đoạn ngắn trước khi khuất đi.</dd></div>
+        </dl>
+        <p>Các mốc trên được ước lượng từ khung hình video. Thanh tua hiển thị thời gian, tốc độ và năng lượng đo được trong cảnh thử dùng GLB của dự án.</p>
+      </details>
+    </section>
+  </main>
+  <script type="module" src="/src/impact.js"></script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "name": "xuong-asset",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "model": "node scripts/create-model.mjs",
+    "model:table": "node scripts/create-table.mjs",
+    "model:beach": "node scripts/create-beach.mjs"
+  },
+  "dependencies": {
+    "cannon-es": "0.20.0",
+    "three": "0.180.0"
+  },
+  "devDependencies": {
+    "vite": "7.2.2"
+  }
+}

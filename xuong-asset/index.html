@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#131921" />
+  <meta name="description" content="Duyệt mô hình 3D của bộ Lam Kim và bối cảnh Vịnh Nắng." />
+  <title>Xưởng Asset 3D · Bộ Lam Kim</title>
+</head>
+<body>
+  <main class="workshop">
+    <header class="masthead">
+      <div class="wordmark"><span aria-hidden="true">✦</span> Xưởng Asset 3D</div>
+      <a id="download" class="download" href="./models/lam-kim.glb" download="lam-kim.glb">Tải GLB</a>
+    </header>
+    <nav class="asset-picker" aria-label="Chọn mô hình">
+      <button type="button" data-asset="cannon" aria-pressed="true">Pháo Lam Kim</button>
+      <button type="button" data-asset="table" aria-pressed="false">Bàn Lam Kim</button>
+      <button type="button" data-asset="beach" aria-pressed="false">Vịnh Nắng</button>
+      <a class="download" href="./impact.html">Thử va chạm</a>
+    </nav>
+    <div class="layout">
+      <section class="stage" aria-label="Mô hình 3D Lam Kim">
+        <div id="viewport" tabindex="0" aria-label="Kéo để xoay, cuộn để thu phóng" aria-describedby="orbit-hint"></div>
+        <p id="loader" role="status">Đang tải mô hình…</p>
+        <div class="angles" role="group" aria-label="Góc xem">
+          <button data-view="orbit" aria-pressed="true">Phối cảnh</button>
+          <button data-view="rear" aria-pressed="false">Từ sau</button>
+          <button data-view="side" aria-pressed="false">Bên hông</button>
+          <button data-view="top" aria-pressed="false">Từ trên</button>
+          <button data-view="game" aria-pressed="false" hidden>Góc trong game</button>
+        </div>
+        <p id="orbit-hint">Kéo để xoay · Cuộn hoặc chụm để thu phóng</p>
+      </section>
+      <aside class="details">
+        <div class="intro">
+          <p id="asset-type" class="type">PHÁO LỄ HỘI</p>
+          <h1><span id="asset-title">Lam Kim</span><span class="title-dot">.</span></h1>
+          <p id="asset-description">Men lam vát cạnh, vòng đồng và đế xoay đa giác.</p>
+        </div>
+        <section id="table-fit" class="motion" aria-labelledby="fit-title" hidden>
+          <h2 id="fit-title">Mặt bàn theo cụm vật</h2>
+          <div class="clips" role="group" aria-label="Bố cục thử">
+            <button type="button" data-fit="narrow" aria-pressed="false">Cụm hẹp</button>
+            <button type="button" data-fit="wide" aria-pressed="true">Hàng ngang</button>
+            <button type="button" data-fit="deep" aria-pressed="false">Hai hàng</button>
+            <button type="button" data-fit="empty" aria-pressed="false">Bàn trống</button>
+          </div>
+          <p class="fit-size">Rộng × sâu <output id="fit-size"></output></p>
+        </section>
+        <section class="motion" aria-labelledby="motion-title">
+          <h2 id="motion-title">Chuyển động</h2>
+          <div id="clips" class="clips" role="group" aria-label="Chọn chuyển động">
+            <button data-clip="0" aria-pressed="true" disabled>Khai hỏa</button>
+            <button data-clip="1" aria-pressed="false" disabled>Đảo nòng</button>
+          </div>
+          <label class="timeline" for="scrub"><span>Tua chuyển động</span><output id="clock">0,00 giây</output></label>
+          <input id="scrub" type="range" min="0" max="1" step="0.01" value="0" disabled />
+          <div class="playback">
+            <button id="play" disabled>Phát chuyển động</button>
+            <button id="reset" disabled>Về đầu</button>
+          </div>
+        </section>
+      </aside>
+    </div>
+  </main>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
