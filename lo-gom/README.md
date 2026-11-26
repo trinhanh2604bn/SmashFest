@@ -17,18 +17,16 @@ Chọn **Góc thứ nhất** hoặc nhấn V để đổi giữa góc toàn cả
 
 Game lấp đầy màn hình điện thoại theo chiều dọc. Trên màn hình rộng, sân chơi nằm giữa trang trong khung dọc tỷ lệ 9:19,5.
 
-Game mở bằng góc nhìn thứ nhất. Bàn Lam Kim dùng cùng tệp GLB với Xưởng Asset 3D. Khi bắt đầu mỗi chặng, chiều rộng và chiều sâu của mặt bàn và vùng va chạm được tính từ kích thước cụm vật ban đầu với mép đệm 0,11 đơn vị mỗi bên.
+Game mở bằng góc nhìn thứ nhất với pháo ở dưới màn hình và mặt bàn nằm giữa sân. Bàn Lam Kim dùng cùng tệp GLB với Xưởng Asset 3D. Mặt bàn, vùng va chạm và khung nhìn được điều chỉnh theo bố cục của từng chặng.
 
 Bối cảnh Vịnh Nắng dùng `src/models/vinh-nang.glb` từ Xưởng Asset 3D. Cảnh chạy cả hai clip Sóng ven bờ và Mây trôi trong lượt chơi.
 
-Ba màn lần lượt giới thiệu bàn tĩnh, bàn trượt và một thử thách hai chặng có bàn xoay. Đạn được dùng chung giữa các chặng. Khi hết đạn, game chờ diễn biến vật lý trước khi chốt kết quả.
+Bảy màn dùng các bố cục Một vật, Hàng domino, Tháp 4–3–2, Cột chịu lực, Kim tự tháp xen kẽ, Hai trụ chung cầu và Pháo đài rỗng. Hai trụ dùng bàn trượt. Màn Pháo đài có hai chặng với bàn nâng hạ rồi bàn trượt và dùng chung 28 viên đạn. Bàn nâng hạ di chuyển mặt bàn và vật thể theo chiều dọc trong khi đế bàn nằm trên cát. Khi hết đạn, game chờ diễn biến vật lý trước khi chốt kết quả.
 
-`src/main.js` chứa dữ liệu màn, luật và điều khiển. `src/arena.js` dựng sân chơi Three.js. Hiệu ứng âm thanh được tổng hợp bằng Web Audio.
+`src/levels.js` chọn bố cục và số đạn mỗi màn. `src/main.js` điều khiển lượt chơi và `src/arena.js` dựng sân chơi Three.js. Có ba mức bắn 11, 24 và 30 m/s.
 
-Khẩu pháo dùng `src/models/lam-kim.glb` từ Xưởng Asset 3D. Game điều khiển trục ngắm theo mục tiêu và phát clip `Khai hỏa` nhúng trong GLB cho mỗi phát bắn.
+Khẩu pháo dùng `src/models/lam-kim.glb` từ Xưởng Asset 3D. Game điều khiển trục ngắm theo mục tiêu, phát clip `Khai hỏa` và tạo chớp lửa ngay vành miệng pháo khi bắn.
 
-`src/models/` chứa GLB của Xưởng Asset 3D và các vật thể trích từ `Ingredients/output/models/` trong gói ZIP Android v547. `src/models.js` ghép từng hũ và thùng với mẫu hư hại tương ứng. Hũ thường dùng mẫu `3DParticle_1x1`, hũ đỏ cao dùng `JamJar_Strawberry_3DParticle_1x2.glb` và thùng dùng `Box_3DParticle_1x1.glb`. Các mesh trong mẫu hư hại giữ nguyên bố cục của GLB và cùng di chuyển theo vật thể.
+`src/models/` chứa GLB của Xưởng Asset 3D và các vật thể trích từ `Ingredients/output/models/` trong gói ZIP Android v547. `src/models.js` ghép từng hũ và thùng với mẫu vỡ tương ứng. Khi vật vỡ, các phần của GLB trở thành các mảnh có collider và quán tính riêng.
 
-`BreakableObject.cs` trong ZIP khai báo ngưỡng tốc độ 18. Bản web dùng ngưỡng này cho cả hũ và thùng để quyết định đổi GLB. Cú nhẹ giữ mẫu nguyên. Sau khi vật thể chạm sàn, `src/target-visual.js` xử lý mờ dần. Năm cặp GLB hũ thường cho va chạm và chạm sàn có cùng dữ liệu, nên mỗi hũ dùng chung một mẫu hư hại trong bản web.
-
-`src/target-impact.js` thiết lập khối lượng đạn, collider dạng trụ cho hũ, collider dạng hộp cho thùng, và hệ số tiếp xúc. Cannon ES giải va chạm tại điểm chạm rồi mô phỏng trọng lực, quán tính và va chạm dây chuyền. Đạn biến mất sau va chạm đầu tiên với mục tiêu đủ lực, bàn hoặc sàn. Trang Thử va chạm của Xưởng Asset dùng cùng các thông số vật lý và các cặp GLB.
+`src/impact-playfield.js` áp dụng năng lượng tiếp xúc để xác định cú chạm nhẹ, sứt hoặc vỡ. Vật mất điểm tựa rơi theo trọng lực. Mảnh còn trên bàn và mảnh xuống sàn đều mờ dần sau va chạm. Game dùng chung bố cục, thông số vật lý, dấu sứt, khói, bụi, tia lửa và mẫu âm với Xưởng Asset qua `../shared/impact/`.

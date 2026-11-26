@@ -17,7 +17,7 @@
             <h1>Lò Gốm<br />Náo Nhiệt</h1>
           </div>
           <div class="tools">
-            <button id="sound" type="button" aria-pressed="false">Bật tiếng</button>
+            <button id="sound" type="button" aria-pressed="true">Tắt tiếng</button>
             <button id="reset" type="button" title="Chơi lại (R)">Chơi lại <kbd>R</kbd></button>
           </div>
         </header>
@@ -30,7 +30,18 @@
       <footer class="bottom">
         <p id="hint" role="status">Chạm vào mục tiêu để bắn</p>
         <div class="controls">
-          <nav id="levels" aria-label="Chọn màn"></nav>
+          <label class="control-field">
+            <span>Màn chơi</span>
+            <select id="levels"></select>
+          </label>
+          <label class="control-field">
+            <span>Lực bắn</span>
+            <select id="shot-speed">
+              <option value="11">Nhẹ</option>
+              <option value="24" selected>Chuẩn</option>
+              <option value="30">Mạnh</option>
+            </select>
+          </label>
           <button id="view-mode" type="button" aria-pressed="true" aria-keyshortcuts="V" disabled>
             Góc thứ nhất <kbd aria-hidden="true">V</kbd>
           </button>

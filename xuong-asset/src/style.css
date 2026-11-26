@@ -71,13 +71,19 @@ h2 { font-size: 1.2rem; margin: 0 0 12px; }
 .fit-size { color: var(--muted); font-size: .86rem; margin: 12px 0 0; }
 .fit-size output { margin-left: 8px; color: #efece2; }
 .impact-title { font-size: clamp(2rem, 4.5vw, 4rem); margin-bottom: 20px; }
-#target, #layout {
+#target, #layout, #shot-speed {
   display: block; width: 100%; margin-top: 7px; padding: .7rem;
   color: inherit; background: #1f2833; border: 1px solid var(--line); border-radius: 8px;
 }
 label[for="layout"] { display: block; margin-top: 12px; }
+#shot-speed { margin-bottom: 12px; }
+.impact-actions #shoot { color: #1b1712; background: var(--gold); border-color: var(--gold); }
+@media (min-width: 751px) {
+  .impact-layout .stage { grid-row: span 2; position: sticky; top: 12px; height: clamp(520px, 73dvh, 760px); }
+  .impact-layout .replay { grid-column: 2; }
+}
 .impact-state { color: var(--muted); overflow-wrap: anywhere; margin: 12px 0 0; }
-.replay { margin-top: 18px; border: 1px solid var(--line); border-radius: 16px; background: #18212a; }
+.replay { min-width: 0; border: 1px solid var(--line); border-radius: 16px; background: #18212a; }
 .replay-controls { align-items: center; margin-top: 12px; }
 #trace-time { flex: 1 1 160px; min-width: 100px; accent-color: var(--gold); }
 #trace-clock { min-width: 5.5rem; font-variant-numeric: tabular-nums; }
@@ -99,4 +105,5 @@ label[for="layout"] { display: block; margin-top: 12px; }
   .stage { min-height: clamp(365px, 57dvh, 570px); }
   .angles { top: 8px; left: 8px; right: 8px; }
   .angles button { padding-inline: .6rem; }
+  .impact-layout:has(#trace-live:not(:disabled)) .stage { position: sticky; top: 0; z-index: 2; }
 }

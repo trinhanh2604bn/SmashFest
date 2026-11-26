@@ -12,34 +12,37 @@
       <div class="wordmark"><span aria-hidden="true">✦</span> Thử va chạm</div>
       <a class="download" href="./">Về xưởng</a>
     </header>
-    <div class="layout">
+    <div class="layout impact-layout">
       <section class="stage" aria-label="Mô phỏng mục tiêu 3D">
         <div id="viewport" aria-label="Kéo để xoay mô hình"></div>
-        <p id="loader" role="status">Đang tải mô hình…</p>
+        <div class="angles impact-actions">
+          <button id="shoot" disabled>Bắn</button>
+          <button id="reference-shot" disabled>Thử phá điểm tựa</button>
+          <button id="slow" type="button" aria-pressed="false">Phát chậm</button>
+        </div>
+        <p id="loader" role="status">Mở trang qua máy chủ Xưởng Asset 3D để tải mô phỏng.</p>
         <p id="orbit-hint">Kéo để xoay · Cuộn hoặc chụm để thu phóng</p>
       </section>
       <aside class="details">
         <section class="intro">
-          <p class="type">MỤC TIÊU TRONG GAME</p>
           <h1 class="impact-title">Phản ứng khi trúng đạn</h1>
           <label for="target">Chọn vật thể</label>
           <select id="target"></select>
           <label for="layout">Bố cục xếp vật</label>
-          <select id="layout">
-            <option value="single">Một vật</option>
-            <option value="row">Hàng domino</option>
-            <option value="tower">Tháp 4–3–2</option>
-            <option value="steps">Bậc thang lệch</option>
-          </select>
-          <p>Chạm vào vật để chọn điểm ngắm, rồi bấm Bắn. Các vật đứng sát nhau có thể làm đổ cả cụm.</p>
+          <select id="layout"></select>
+          <p id="layout-note" class="impact-state" hidden></p>
+          <p id="aim-note">Chạm vào thân hoặc mép vật để ngắm, rồi bấm Bắn.</p>
         </section>
         <section class="motion">
           <h2>Mô phỏng</h2>
+          <label for="shot-speed">Lực bắn</label>
+          <select id="shot-speed">
+            <option value="11">Nhẹ · 11 m/s</option>
+            <option value="24" selected>Chuẩn · 24 m/s</option>
+            <option value="30">Mạnh · 30 m/s</option>
+          </select>
           <div class="playback" id="controls">
-            <button id="reference-shot" disabled>Chạy cảnh tham chiếu</button>
-            <button id="shoot" disabled>Bắn</button>
             <button id="reset" disabled>Đặt lại</button>
-            <button id="slow" type="button" aria-pressed="false">Phát chậm</button>
             <button id="sound" type="button" aria-pressed="true">Âm thanh</button>
           </div>
           <p id="state" class="impact-state" role="status"></p>
@@ -48,34 +51,36 @@
           <h2>Đối chiếu GLB</h2>
           <div class="playback">
             <button id="intact" aria-pressed="true" disabled>Mẫu nguyên</button>
-            <button id="damaged" aria-pressed="false" disabled>Mẫu hư hại</button>
+            <button id="chipped" aria-pressed="false" disabled>Sứt nhẹ</button>
+            <button id="damaged" aria-pressed="false" disabled>Mẫu vỡ</button>
           </div>
           <p id="filename" class="impact-state"></p>
+          <p id="model-note" class="impact-state" hidden>Dấu sứt được mô phỏng trên mẫu nguyên.</p>
         </section>
       </aside>
+      <section class="replay motion" aria-labelledby="replay-title">
+        <h2 id="replay-title">Tua từng trạng thái</h2>
+        <p class="impact-state" id="trace-status" role="status">Bắn một phát để ghi lại diễn biến trong mô phỏng.</p>
+        <div class="playback replay-controls">
+          <button type="button" id="trace-play" disabled>Phát lại</button>
+          <input type="range" id="trace-time" aria-label="Tua lượt bắn" min="0" max="0" value="0" disabled />
+          <output id="trace-clock" for="trace-time">0,00 giây</output>
+          <button type="button" id="trace-live" disabled>Về mô phỏng</button>
+        </div>
+        <p class="impact-state" id="trace-detail" aria-live="polite"></p>
+        <ol id="trace-events" aria-label="Mốc trạng thái trong mô phỏng"></ol>
+        <details class="reference-notes">
+          <summary>Quan sát từ video tham chiếu</summary>
+          <dl>
+            <div><dt>06,9–08,4 giây</dt><dd>Vật cam vỡ ở hàng thấp bên phải. Vật xanh–trắng ở trên còn nguyên khi bắt đầu nghiêng và rơi.</dd></div>
+            <div><dt>21,3–22,8 giây</dt><dd>Thanh trên đỉnh xoay, vật cyan bật sang bên và một phần hàng dưới vẫn đứng.</dd></div>
+            <div><dt>52,6–53,5 giây</dt><dd>Đạn còn thấy sau khi chạm vật cuối. Vật lật qua mép bàn, rồi mới thấy mảnh và bụi trên cát.</dd></div>
+          </dl>
+          <p>Các mốc trên được ước lượng từ khung hình video. Thanh tua hiển thị thời gian, tốc độ và năng lượng đo được trong cảnh thử dùng GLB của dự án.</p>
+        </details>
+      </section>
     </div>
-    <section class="replay motion" aria-labelledby="replay-title">
-      <h2 id="replay-title">Tua từng trạng thái</h2>
-      <p class="impact-state" id="trace-status" role="status">Bắn một phát để ghi lại diễn biến trong mô phỏng.</p>
-      <div class="playback replay-controls">
-        <button type="button" id="trace-play" disabled>Phát lại</button>
-        <input type="range" id="trace-time" aria-label="Tua lượt bắn" min="0" max="0" value="0" disabled />
-        <output id="trace-clock" for="trace-time">0,00 giây</output>
-        <button type="button" id="trace-live" disabled>Về mô phỏng</button>
-      </div>
-      <ol id="trace-events" aria-label="Mốc trạng thái trong mô phỏng"></ol>
-      <p class="impact-state" id="trace-detail"></p>
-      <details class="reference-notes">
-        <summary>Quan sát từ video tham chiếu</summary>
-        <dl>
-          <div><dt>18,63–19,23 giây</dt><dd>Đạn chạm mép phải sau khoảng 0,07 giây. Phần xanh mất điểm đỡ, rơi qua mép bàn và chạm cát khoảng 0,6 giây sau cú bắn.</dd></div>
-          <div><dt>21,47–22,47 giây</dt><dd>Thanh dài bắt đầu xoay khoảng 0,08 giây sau khi bắn. Nó đẩy vật liền kề rồi chạm cát sau khoảng 0,9–1,0 giây.</dd></div>
-          <div><dt>Sau khi chạm cát</dt><dd>Các mảnh bắn thấp, giữ một phần chuyển động ngang rồi lăn hoặc trượt một đoạn ngắn trước khi khuất đi.</dd></div>
-        </dl>
-        <p>Các mốc trên được ước lượng từ khung hình video. Thanh tua hiển thị thời gian, tốc độ và năng lượng đo được trong cảnh thử dùng GLB của dự án.</p>
-      </details>
-    </section>
   </main>
-  <script type="module" src="/src/impact.js"></script>
+  <script type="module" src="./src/impact.js"></script>
 </body>
 </html>

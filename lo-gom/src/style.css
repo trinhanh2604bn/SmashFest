@@ -17,8 +17,8 @@ body {
   place-items: center;
   background: radial-gradient(ellipse at center, #243743, #0b151c 75%);
 }
-button { font: inherit; cursor: pointer; }
-button:focus-visible, canvas:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+button, select { font: inherit; cursor: pointer; }
+button:focus-visible, select:focus-visible, canvas:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
 .game {
   --frame-gap: clamp(8px, 2.5dvh, 24px);
   --frame-height: min(900px, calc(100dvh - 2 * var(--frame-gap)));
@@ -64,7 +64,7 @@ button:focus-visible, canvas:focus-visible { outline: 3px solid var(--gold); out
 .brand-mark { width: clamp(26px, 9cqw, 38px); font-size: clamp(16px, 5cqw, 23px); }
 h1 { margin: 0; font-size: clamp(1.05rem, 5.6cqw, 1.5rem); line-height: .98; letter-spacing: -.06em; }
 .tools { display: flex; gap: 8px; }
-button {
+button, select {
   padding: .45rem .65rem;
   border-radius: 9px;
   border: 1px solid var(--line);
@@ -74,7 +74,7 @@ button {
   font-weight: 700;
   min-height: 44px;
 }
-button:hover { border-color: var(--gold); }
+button:hover, select:hover { border-color: var(--gold); }
 .tools button, .bottom button { pointer-events: auto; }
 kbd { margin-left: 7px; color: var(--gold); }
 .hud {
@@ -111,9 +111,17 @@ kbd { margin-left: 7px; color: var(--gold); }
   font-size: .93rem;
   text-align: center;
 }
-.controls { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; }
-#levels { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
-#levels button[aria-current="true"], #next { background: var(--gold); color: var(--ink); border-color: var(--gold); }
+.controls {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(68px, 1fr) auto;
+  align-items: end;
+  gap: 8px;
+}
+.control-field { display: grid; min-width: 0; gap: 4px; pointer-events: auto; }
+.control-field span { padding-inline: 2px; color: #d4e0dd; font-size: .75rem; }
+.control-field select { width: 100%; min-width: 0; padding-inline: .45rem .25rem; text-overflow: ellipsis; }
+#next { background: var(--gold); color: var(--ink); border-color: var(--gold); }
 #view-mode[aria-pressed="true"] { color: var(--gold); border-color: var(--gold); }
 dialog {
   width: calc(100cqw - 2 * var(--gutter));
@@ -150,7 +158,7 @@ h2 { margin: 14px 0 6px; font-size: clamp(1.1rem, 7cqw, 2rem); line-height: 1.1;
 }
 @container (max-width: 275px) {
   .game-header { gap: 6px; }
-  .top, .tools, .controls, #levels { gap: 4px; }
+  .top, .tools, .controls { gap: 4px; }
   .brand-mark { display: none; }
   .top h1 { font-size: .9rem; }
   .hud > div { padding: 5px 4px; }
@@ -158,5 +166,7 @@ h2 { margin: 14px 0 6px; font-size: clamp(1.1rem, 7cqw, 2rem); line-height: 1.1;
   .hud strong { font-size: .8rem; }
   .bottom { padding-top: 8px; gap: 5px; }
   #hint { padding: 4px 7px; font-size: .77rem; }
-  button { min-height: 32px; font-size: .75rem; padding-inline: .38rem; }
+  button, select { min-height: 32px; font-size: .75rem; padding-inline: .38rem; }
+  .controls { grid-template-columns: minmax(0, 1.4fr) minmax(56px, .8fr) auto; }
+  .control-field span { font-size: .66rem; }
 }

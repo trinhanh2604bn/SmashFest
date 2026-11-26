@@ -35,14 +35,15 @@ export function measureContact(contact, minimumSpeed) {
 export function configureImpactWorld(world) {
   world.broadphase.useBoundingBoxes = true;
   world.narrowphase.enableFrictionReduction = true;
-  world.solver.iterations = 12;
+  world.solver.iterations = 24;
   const target = new Material('target');
   const floor = new Material('ground');
   const deck = new Material('deck');
   const ball = new Material('ball');
   const airborne = new Material('airborne-fragment');
   const fragment = new Material('ground-fragment');
-  for (const [other, friction, restitution] of [[target, .50, .01], [deck, .48, 0], [ball, .20, .02]]) {
+  // A jar's base grips the wood more than two curved jar walls grip each other.
+  for (const [other, friction, restitution] of [[target, .36, 0], [deck, .78, 0], [ball, .20, .02]]) {
     world.addContactMaterial(new ContactMaterial(other, target, { friction, restitution }));
   }
   world.addContactMaterial(new ContactMaterial(floor, target, {
@@ -55,9 +56,50 @@ export function configureImpactWorld(world) {
     friction: groundFragments.friction,
     restitution: groundFragments.bounce,
   }));
-  world.addContactMaterial(new ContactMaterial(target, airborne, { friction: .22, restitution: .02 }));
+  world.addContactMaterial(new ContactMaterial(floor, ball, { friction: .45, restitution: .24 }));
+  world.addContactMaterial(new ContactMaterial(deck, ball, { friction: .28, restitution: .16 }));
+  world.addContactMaterial(new ContactMaterial(target, airborne, { friction: .14, restitution: 0 }));
   world.addContactMaterial(new ContactMaterial(deck, airborne, { friction: .43, restitution: .02 }));
   return { target, floor, deck, ball, airborne, fragment };
+}
+
+export function applyJarInertia(body, profile) {
+  // Approximate the ceramic shell by the two tapered walls and end discs of the collider.
+  // All moments use the body origin so contacts, transforms and replay share a reference.
+  let area = 0;
+  let axialMoment = 0;
+  let transverseMoment = 0;
+  function addSurface(height, radiusSquared, weight) {
+    area += weight;
+    axialMoment += weight * radiusSquared;
+    transverseMoment += weight * (height * height + radiusSquared / 2);
+  }
+
+  const wallSamples = 4;
+  for (let ring = 1; ring < profile.length; ring++) {
+    const lower = profile[ring - 1];
+    const upper = profile[ring];
+    const dy = upper.y - lower.y;
+    const dr = upper.radius - lower.radius;
+    const sampleLength = Math.hypot(dy, dr) / wallSamples;
+    for (let sample = 0; sample < wallSamples; sample++) {
+      const offset = (sample + .5) / wallSamples;
+      const radius = lower.radius + dr * offset;
+      addSurface(lower.y + dy * offset, radius * radius, radius * sampleLength);
+    }
+  }
+  for (const end of [profile[0], profile.at(-1)]) {
+    const disc = end.radius * end.radius / 2;
+    addSurface(end.y, disc, disc);
+  }
+  if (area <= 0) return;
+
+  const scale = body.mass / area;
+  const axial = axialMoment * scale;
+  const transverse = transverseMoment * scale;
+  body.inertia.set(transverse, axial, transverse);
+  body.invInertia.set(1 / transverse, 1 / axial, 1 / transverse);
+  body.updateInertiaWorld(true);
 }
 
 export function makeTargetShape(width, height, jarProfile) {
