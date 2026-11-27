@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#f4efe4" />
+  <meta name="description" content="Duyệt, xoay và bắn thử các mẫu mục tiêu nguyên bản trong Xưởng Asset 3D." />
+  <title>Kho mục tiêu · Xưởng Asset 3D</title>
+  <script type="module" crossorigin src="./assets/catalog-Jurlfcww.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="./assets/OrbitControls-PDM1kWcY.js">
+  <link rel="modulepreload" crossorigin href="./assets/target-impact-D9ls4GZk.js">
+  <link rel="stylesheet" crossorigin href="./assets/catalog-Bc1nH2Cp.css">
+</head>
+<body>
+  <main class="catalog">
+    <header class="catalog-nav">
+      <a class="wordmark" href="./"><span aria-hidden="true">✦</span> Xưởng Asset 3D</a>
+      <a class="back-link" href="./impact.html">Thử va chạm <span aria-hidden="true">↗</span></a>
+    </header>
+    <h1>Kho mục tiêu</h1>
+    <div class="catalog-grid">
+      <section class="shelf" aria-label="Mẫu mục tiêu">
+        <div class="asset-list" id="target-list"></div>
+      </section>
+      <section class="bench" aria-labelledby="asset-title">
+        <header class="bench-header">
+          <div>
+            <h2 id="asset-title">Đang tải mục tiêu…</h2>
+            <p id="asset-material"></p>
+          </div>
+          <div class="view-actions" role="group" aria-label="Góc xem">
+            <button type="button" id="view-front" aria-pressed="false">Chính diện</button>
+            <button type="button" id="view-orbit" aria-pressed="true">Phối cảnh</button>
+          </div>
+        </header>
+        <div class="viewport" id="catalog-viewport" aria-label="Cảnh thử mục tiêu 3D">
+          <p class="loading" id="catalog-loader" role="status">Đang khởi tạo cảnh 3D…</p>
+          <p class="orbit-note">Kéo để xoay · Chạm vào vật để ngắm</p>
+        </div>
+        <div class="bench-controls">
+          <div class="states" role="group" aria-label="Trạng thái vật">
+            <button type="button" data-state="intact" aria-pressed="true" disabled>Nguyên</button>
+            <button type="button" data-state="dented" aria-pressed="false" disabled>Sứt</button>
+            <button type="button" data-state="fragments" aria-pressed="false" disabled>Vỡ</button>
+          </div>
+          <div class="shot-controls">
+            <label class="shot-strength" for="catalog-speed">
+              <span>Lực bắn</span>
+              <select id="catalog-speed">
+                <option value="11">Nhẹ</option>
+                <option value="25">Chuẩn</option>
+                <option value="30" selected>Mạnh</option>
+              </select>
+            </label>
+            <button type="button" id="catalog-fire" class="primary" disabled>Bắn thử</button>
+            <button type="button" id="catalog-reset" disabled>Đặt lại</button>
+            <button type="button" id="catalog-sound" aria-pressed="true">Âm thanh</button>
+          </div>
+        </div>
+        <div class="readout" role="status">
+          <span id="catalog-status">Đang tải…</span>
+          <output id="impact-energy" aria-label="Năng lượng va chạm" hidden></output>
+        </div>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

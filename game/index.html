@@ -5,11 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#101417">
   <title>SmashFest · Editor màn chơi</title>
-  <script type="module" crossorigin src="./assets/index-DkRl0v6M.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-Dj-AnE-6.css">
+  <script type="module" crossorigin src="./assets/index-B8zNoe0o.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-4fepQXG3.css">
 </head>
 <body>
   <header class="mast"><div class="wordmark"><span class="brand-icon" aria-hidden="true">✹</span> SmashFest</div><span class="divider"></span><span>Game editor</span><a class="jump" href="#editor">Điều chỉnh ↓</a></header>
+  <nav class="workspace-nav" aria-label="Không gian SmashFest">
+    <button type="button" data-workspace="play" aria-pressed="true">Editor</button>
+    <button type="button" data-workspace="studio" aria-pressed="false">Xưởng 3D</button>
+    <button type="button" data-workspace="catalog" aria-pressed="false">Thử asset</button>
+    <button type="button" data-workspace="reference" aria-pressed="false">Phân tích</button>
+  </nav>
   <main class="workspace">
     <section id="editor" class="editor" aria-labelledby="editor-title">
       <header class="heading"><small>LÒ GỐM NÁO NHIỆT</small><h1 id="editor-title">Editor màn chơi</h1></header>
@@ -49,7 +55,7 @@
             <div id="stars"><span>★</span><span>★</span><span>★</span></div>
             <small id="result-kicker"></small><h2 id="result-title" tabindex="-1"></h2>
             <strong id="round-points"></strong><p id="result-detail"></p>
-            <img class="lineup" src="./assets/result-lineup-CfjY8i3Y.webp" alt="Hũ việt quất, thùng gỗ, hũ cam và hũ nho">
+            <img class="lineup" src="./assets/result-lineup-CLIr9EDn.webp" alt="Bộ lon thiếc, hộp vuông và chóp lễ hội">
             <div class="result-actions"><button id="start" class="primary">Bắt đầu chơi →</button><button id="next" class="primary">Màn tiếp theo →</button><button id="retry">Chơi lại</button></div>
           </div>
         </section>
@@ -59,5 +65,9 @@
       <div id="height-grip" class="grip" role="separator" aria-orientation="horizontal" aria-controls="preview" aria-label="Điều chỉnh chiều cao sân chơi" aria-valuemin="330" aria-valuemax="1400" title="Kéo để đổi chiều cao · Nhấp đúp để đặt lại" tabindex="0"></div>
     </section>
   </main>
+  <section class="studio-pane" aria-label="Xưởng và tài liệu" hidden>
+    <a class="studio-open" target="_blank" rel="noopener">Mở trang riêng ↗</a>
+    <iframe title="Xưởng Asset SmashFest"></iframe>
+  </section>
 </body>
 </html>
