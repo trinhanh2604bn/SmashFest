@@ -1,0 +1,13 @@
+SmashFest — Nhạc nền và âm thanh kết quả
+
+Nhạc nền Vịnh Nắng: “Tropical BGM” của syncopika.
+Nguồn: https://opengameart.org/content/tropical-bgm
+Giấy phép: Creative Commons Attribution 3.0 Unported
+https://creativecommons.org/licenses/by/3.0/
+Bản trong game đã được giảm âm lượng, cắt khoảng lặng cuối, thêm fade ngắn và chuyển sang MP3.
+
+Âm thanh thắng và hết đạn: “jingles_STEEL02” và “jingles_STEEL11” của Kenney.
+Nguồn: https://opengameart.org/content/85-short-music-jingles
+Giấy phép: CC0 1.0 Universal
+https://creativecommons.org/publicdomain/zero/1.0/
+Cả hai đoạn đã được chuyển sang MP3.
