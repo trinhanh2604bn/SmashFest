@@ -6,17 +6,22 @@ import {
 } from './arena.js';
 import { loadArenaModels } from './models.js';
 import { levels } from './levels.js';
+import { createEditor } from './editor.js';
+import { createRoundScore, earnedStars, formatPoints } from './round-score.js';
+import { enableWorkspaceSizing } from './workspace-size.js';
+import '@fontsource-variable/nunito/wght.css';
 import { createImpactPlayfield } from './impact-playfield.js';
 import { configureImpactWorld, floorGroup, gravity, shotMass } from '../../shared/impact/target-impact.js';
 import { createImpactFeedback } from '../../shared/impact/impact-feedback.js';
+import shotUrl from '../../shared/impact/sfx/cannon.ogg?url';
 import './style.css';
 
 const get = id => document.getElementById(id);
 const ui = Object.fromEntries([
-  'arena', 'sound', 'reset', 'view-mode', 'level-number', 'level-name', 'shots', 'ammo', 'targets', 'stage',
+  'arena', 'sound', 'reset', 'view-mode', 'level-number', 'level-name', 'shots', 'targets', 'stage',
+  'start', 'advance', 'result-kicker', 'last-shot', 'score', 'round-points', 'combo', 'stars',
   'hint', 'levels', 'shot-speed', 'result', 'result-title', 'result-detail', 'retry', 'next', 'error',
 ].map(id => [id, get(id)]));
-const gameHeader = document.querySelector('.game-header');
 
 const fixedStep = 1 / 120;
 const deckTop = 1.34;
@@ -46,12 +51,26 @@ async function start() {
   floor.quaternion.setFromEuler(-Math.PI / 2, 0, 0);
   world.addBody(floor);
   const feedback = createImpactFeedback(scene);
-  const playfield = createImpactPlayfield({ scene, world, floor, surfaces, feedback, deckTop, step: fixedStep });
+  let score = createRoundScore();
+  let pendingCombo;
+  let comboAt = -Infinity;
+  const playfield = createImpactPlayfield({ scene, world, floor, surfaces, feedback, deckTop, step: fixedStep,
+    onScored(shotId) {
+      const hit = score.hitTarget(shotId);
+      if (!hit) return;
+      ui.score.textContent = formatPoints(score.points);
+      if (hit.title && (!pendingCombo || hit.count >= pendingCombo.count)) pendingCombo = hit;
+    },
+  });
 
   const cannon = makeCannon();
   cannon.group.position.set(0, 0, 4.4);
   scene.add(cannon.group);
   const pivotPosition = cannon.pivot.getWorldPosition(new THREE.Vector3());
+  const cameraAnchor = pivotPosition.clone();
+  const shotSound = new Audio(shotUrl);
+  shotSound.preload = 'auto';
+  shotSound.volume = .55;
   const reticle = new THREE.Mesh(
     new THREE.RingGeometry(.15, .182, 36),
     new THREE.MeshBasicMaterial({ color: '#ffe49e', depthTest: false, transparent: true, opacity: .93 }),
@@ -76,11 +95,11 @@ async function start() {
   let stageTime = 0;
   let lastShot = -Infinity;
   let movingSince = 0;
-  let transitionAt = 0;
   let state = 'playing';
   let table;
   let stageFrame;
   let balls = [];
+  const editor = createEditor(loadLevel);
 
   function setHint(value) {
     if (ui.hint.textContent !== value) ui.hint.textContent = value;
@@ -91,14 +110,9 @@ async function start() {
     ui['level-number'].textContent = String(levelIndex + 1).padStart(2, '0');
     ui['level-name'].textContent = level.name;
     ui.shots.textContent = shots;
+    ui.score.textContent = formatPoints(score.points);
     ui.targets.textContent = playfield.targets.length;
-    ui.stage.textContent = level.stages.length > 1 ? `Chặng ${stageIndex + 1}/${level.stages.length}` : '';
-    const dots = Array.from({ length: level.shots }, (_, index) => {
-      const dot = document.createElement('i');
-      dot.classList.toggle('filled', index < shots);
-      return dot;
-    });
-    ui.ammo.replaceChildren(...dots);
+    ui.stage.textContent = `${stageIndex + 1}/${level.stages.length}`;
     ui.levels.value = String(levelIndex);
   }
 
@@ -117,6 +131,10 @@ async function start() {
   }
 
   function loadStage() {
+    ui.result.hidden = true;
+    ui.combo.hidden = true;
+    pendingCombo = null;
+    comboAt = -Infinity;
     if (table) remove(table);
     balls.forEach(remove);
     balls = [];
@@ -185,13 +203,16 @@ async function start() {
       x,
       z,
       travelX,
-      anchor: pivotPosition,
+      anchor: cameraAnchor,
       framingPoints,
     };
     updateHud();
+    editor.showStage(levelIndex, stageIndex);
+    ui['last-shot'].hidden = shots > 0;
     frameStage(camera.aspect);
     resetAim();
     cannon.reset();
+    shotSound.pause();
     cannon.aim(aimDirection.subVectors(neutralAim, pivotPosition));
     scene.updateMatrixWorld();
     stageTime = time;
@@ -201,12 +222,15 @@ async function start() {
   }
 
   function loadLevel(index) {
-    if (ui.result.open) ui.result.close();
     levelIndex = index;
     stageIndex = 0;
     shots = levels[index].shots;
+    score = createRoundScore();
     lastShot = -Infinity;
     loadStage();
+    state = 'intro';
+    setHint('Nhấn Bắt đầu chơi để vào màn.');
+    showScreen('intro');
   }
 
   function aim() {
@@ -242,6 +266,10 @@ async function start() {
     const velocity = displacement.addScaledVector(direction, -cannon.muzzleDistance).multiplyScalar(1 / flight);
     cannon.aim(direction);
     cannon.fire();
+    if (!feedback.muted) {
+      shotSound.currentTime = 0;
+      shotSound.play().catch(() => {});
+    }
     const body = new CANNON.Body({
       mass: shotMass, material: surfaces.ball,
       position: new CANNON.Vec3(muzzle.x, muzzle.y, muzzle.z),
@@ -250,6 +278,7 @@ async function start() {
       linearDamping: .12, angularDamping: .22,
     });
     body.isShot = true;
+    body.shotId = levels[levelIndex].shots - shots + 1;
     body.addEventListener('collide', ({ body: other, contact }) => {
       if ((other !== floor && other !== table.body) || body.contactAt !== undefined) return;
       body.contactAt = time;
@@ -260,23 +289,60 @@ async function start() {
     balls.push({ ...attach(makeBall(), body), start: time });
     shots--;
     lastShot = time;
-    const rim = cannon.muzzle.getWorldPosition(new THREE.Vector3());
-    feedback.emit('muzzle', rim, time, { normal: direction, strength: .58 + speed / 68, cannon: true });
     updateHud();
-    if (shots === 0) setHint(settlingHint);
+    if (shots === 0) {
+      ui['last-shot'].hidden = false;
+      setHint(settlingHint);
+    }
+  }
+
+  function showScreen(mode) {
+    const level = levels[levelIndex];
+    const intro = mode === 'intro';
+    const won = mode === 'won';
+    const cleared = mode === 'cleared';
+    const finalLevel = levelIndex === levels.length - 1;
+    ui.result.dataset.mode = mode;
+    ui['last-shot'].hidden = true;
+    ui.combo.hidden = true;
+    const used = level.shots - shots;
+    const stars = earnedStars(won, used, level.shots);
+    ui.stars.hidden = intro || cleared;
+    ui.stars.setAttribute('aria-label', `${stars} trên 3 sao`);
+    [...ui.stars.children].forEach((star, i) => star.classList.toggle('earned', i < stars));
+    ui['result-kicker'].textContent = `VỊNH NẮNG  ·  MÀN ${String(levelIndex + 1).padStart(2, '0')}`;
+    ui['result-title'].textContent = intro ? level.name : cleared ? 'Sạch bàn rồi!' : won ? (finalLevel ? 'Chinh phục Vịnh Nắng!' : 'Thắng màn!') : 'Hết đạn rồi!';
+    ui['round-points'].hidden = intro;
+    ui['round-points'].textContent = formatPoints(score.points) + ' điểm';
+    ui['result-detail'].textContent = intro
+      ? `Bạn có ${level.shots} viên đạn. Chạm vào mục tiêu để bắn đổ tất cả${level.stages.length > 1 ? ' qua ' + level.stages.length + ' chặng' : ''}.`
+      : cleared ? `Đã dọn chặng ${stageIndex + 1}. Còn ${shots} viên cho chặng tiếp theo.`
+      : won ? `${used} phát bắn · Chuỗi tốt nhất: ${score.best} vật`
+        : `Còn ${playfield.targets.length} mục tiêu trên bàn. ${playfield.targets.length === 1 ? 'Lượt tới, thử ngắm vào thân vật nhé.' : 'Thử nhắm vào điểm tựa ở hàng dưới nhé.'}`;
+    ui.start.hidden = !intro;
+    ui.retry.hidden = intro || cleared;
+    ui.next.hidden = !cleared && (!won || finalLevel);
+    ui.next.textContent = cleared ? 'Chặng tiếp theo →' : 'Màn tiếp theo →';
+    ui.retry.classList.toggle('primary', won && finalLevel);
+    ui.result.hidden = false;
+    canvas.tabIndex = -1;
+    if (!intro) ui['result-title'].focus({ preventScroll: true });
+  }
+
+  function beginRound() {
+    state = 'playing';
+    ui.result.hidden = true;
+    canvas.tabIndex = 0;
+    canvas.focus({ preventScroll: true });
+    setHint(readyHint);
   }
 
   function finish(won) {
     state = won ? 'won' : 'lost';
-    const finalLevel = levelIndex === levels.length - 1;
-    ui['result-title'].textContent = won ? (finalLevel ? 'Hoàn thành phiên chợ!' : 'Dọn sạch bàn!') : 'Hết đạn rồi!';
-    ui['result-detail'].textContent = won
-      ? `Bạn hoàn thành màn với ${shots} viên đạn còn lại.`
-      : `Còn ${playfield.targets.length} mục tiêu trên sân.`;
-    ui.next.hidden = !won || finalLevel;
+    editor.record(levelIndex, won, levels[levelIndex].shots - shots, playfield.targets.length, formatPoints(score.points));
     setHint(won ? 'Đã hoàn thành màn' : 'Chơi lại để thử cách ngắm khác');
     feedback.playResult(won);
-    ui.result.showModal();
+    showScreen(state);
   }
 
   function updateTable() {
@@ -289,13 +355,6 @@ async function start() {
   }
 
   function updateGame() {
-    if (state === 'transition') {
-      if (time >= transitionAt) {
-        stageIndex++;
-        loadStage();
-      }
-      return;
-    }
     if (state !== 'playing') return;
 
     const { items, targets, lastImpact } = playfield;
@@ -306,9 +365,13 @@ async function start() {
       }
       if (stageIndex + 1 === levels[levelIndex].stages.length) {
         finish(true);
+      } else if (shots === 0) {
+        stageIndex++;
+        loadStage();
+        finish(false);
       } else {
-        state = 'transition';
-        transitionAt = time + .85;
+        state = 'cleared';
+        showScreen(state);
         setHint('Đã dọn sạch bàn · Sang chặng tiếp theo');
       }
       return;
@@ -328,12 +391,22 @@ async function start() {
   }
 
   function updatePhysics() {
+    scenery.update(fixedStep);
+    if (state !== 'playing') return;
     time += fixedStep;
     cannon.update(fixedStep);
-    scenery.update(fixedStep);
     updateTable();
     const previousCount = playfield.targets.length;
     playfield.step(time);
+    if (pendingCombo && time - comboAt >= .18) {
+      ui.combo.firstElementChild.textContent = pendingCombo.title;
+      ui.combo.lastElementChild.textContent = `${pendingCombo.count} vật · ${formatPoints(pendingCombo.chainPoints)} điểm`;
+      ui.combo.hidden = false;
+      feedback.playCombo(pendingCombo.count);
+      ui.combo.animate([{ transform: 'scale(.82)' }, { transform: 'scale(1.06)' }, { transform: 'scale(1)' }], { duration: matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 220 });
+      comboAt = time;
+      pendingCombo = null;
+    } else if (!ui.combo.hidden && time - comboAt > 1.15) ui.combo.hidden = true;
     if (playfield.targets.length !== previousCount) updateHud();
     balls = balls.filter(ball => {
       const { body } = ball;
@@ -359,10 +432,9 @@ async function start() {
   }
 
   function frameStage(aspect) {
-    if (stageFrame) {
-      const headerFraction = (gameHeader.offsetHeight + 8) / Math.max(1, ui.arena.clientHeight);
-      stageFrame.topLimit = THREE.MathUtils.clamp(1 - 2 * headerFraction, .25, .71);
-    }
+    cannon.group.position.z = firstPerson ? 4.56 : 4.4;
+    cannon.pivot.getWorldPosition(pivotPosition);
+    if (stageFrame) stageFrame.topLimit = .71;
     frameCamera(camera, aspect, firstPerson, stageFrame);
   }
 
@@ -371,6 +443,7 @@ async function start() {
     frameStage(camera.aspect);
     resetAim();
     ui['view-mode'].setAttribute('aria-pressed', String(firstPerson));
+    ui['view-mode'].textContent = firstPerson ? 'Góc thứ nhất' : 'Góc toàn cảnh';
   }
 
   function resize() {
@@ -414,20 +487,29 @@ async function start() {
   window.addEventListener('keydown', event => {
     if (event.ctrlKey || event.metaKey || event.altKey) return;
     const key = event.key.toLowerCase();
-    if (key === 'r') loadLevel(levelIndex);
-    if (key === 'v' && !event.repeat && !ui.result.open) toggleView();
+    if (event.target.closest('select,input,textarea')) return;
+    if (key === 'r' && !event.repeat) loadLevel(levelIndex);
+    if (key === 'v' && !event.repeat) toggleView();
   });
   ui['view-mode'].addEventListener('click', toggleView);
   ui['view-mode'].disabled = false;
   ui.reset.addEventListener('click', () => loadLevel(levelIndex));
-  ui.retry.addEventListener('click', () => loadLevel(levelIndex));
+  ui.start.addEventListener('click', beginRound);
+  ui.retry.addEventListener('click', () => { loadLevel(levelIndex); beginRound(); });
+  ui.advance.addEventListener('click', () => loadLevel(levelIndex + 1));
   ui.next.addEventListener('click', () => {
-    if (levelIndex + 1 < levels.length) loadLevel(levelIndex + 1);
+    if (state === 'cleared') {
+      stageIndex++;
+      loadStage();
+      canvas.tabIndex = 0;
+      canvas.focus({preventScroll:true});
+    } else if (levelIndex + 1 < levels.length) loadLevel(levelIndex + 1);
   });
   ui.sound.addEventListener('click', () => {
     feedback.toggle();
+    shotSound.muted = feedback.muted;
     ui.sound.setAttribute('aria-pressed', String(!feedback.muted));
-    ui.sound.textContent = feedback.muted ? 'Bật tiếng' : 'Tắt tiếng';
+    ui.sound.textContent = feedback.muted ? 'Đang tắt' : 'Đang bật';
   });
   ui.levels.append(...levels.map((level, index) => new Option(`${index + 1}. ${level.name}`, index)));
   ui.levels.addEventListener('change', () => loadLevel(Number(ui.levels.value)));
@@ -457,6 +539,7 @@ async function start() {
   });
 }
 
+enableWorkspaceSizing();
 start().catch(error => {
   ui.error.hidden = false;
   console.error(error);

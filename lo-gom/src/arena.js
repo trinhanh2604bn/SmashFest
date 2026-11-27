@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { cloneArenaModel, makeFittedModel, sharedModelGeometry } from './models.js';
+import { createCannonFlash } from '../../shared/impact/cannon-flash.js';
 
 export const targetWidth = .7;
 export const targetHeight = .8;
@@ -73,17 +74,12 @@ export function makeCannon() {
   const turret = model.getObjectByName('TurretYaw');
   const pitch = model.getObjectByName('BarrelPitch');
   const slide = model.getObjectByName('BarrelRecoil');
-  const ring = model.getObjectByName(THREE.PropertyBinding.sanitizeNodeName('Vành miệng'));
   const fireClip = animations.find(clip => clip.name === 'Khai hỏa');
-  if (!turret || !pitch || !slide || !ring || !fireClip) throw new Error('Incomplete Lam Kim rig');
+  if (!turret || !pitch || !slide || !fireClip) throw new Error('Incomplete Lam Kim rig');
   const restPivot = pitch.getWorldPosition(new THREE.Vector3());
   const rim = new THREE.Box3().setFromObject(slide).max.z - restPivot.z;
-  const ringBounds = new THREE.Box3().setFromObject(ring);
-  const front = ringBounds.getCenter(new THREE.Vector3());
-  front.z = ringBounds.max.z;
-  const muzzle = new THREE.Object3D();
-  muzzle.position.copy(slide.worldToLocal(front));
-  slide.add(muzzle);
+  const muzzle = createCannonFlash();
+  slide.add(muzzle.flash);
   const scale = .83 / restPivot.y;
   model.scale.multiplyScalar(scale);
 
@@ -99,7 +95,6 @@ export function makeCannon() {
   return {
     group: model,
     pivot,
-    muzzle,
     muzzleDistance: rim * scale + ballRadius + .03,
     aim(direction) {
       turret.rotation.y = Math.atan2(direction.x, direction.z);
@@ -109,8 +104,11 @@ export function makeCannon() {
       fire.stop().reset().play();
       mixer.update(0);
     },
-    reset() { fire.stop(); },
-    update(delta) { mixer.update(delta); },
+    reset() { fire.stop(); muzzle.draw(0); },
+    update(delta) {
+      mixer.update(delta);
+      muzzle.draw(fire.isRunning() ? fire.time : 0);
+    },
   };
 }
 
@@ -137,7 +135,7 @@ function firstPersonStageTangent(camera, aspect, { framingPoints, topLimit }) {
   for (const corner of framingPoints) {
     point.copy(corner).applyMatrix4(camera.matrixWorldInverse);
     const distance = -point.z;
-    tangent = Math.max(tangent, Math.abs(point.x) / (distance * aspect * .94), point.y / (distance * topLimit));
+    tangent = Math.max(tangent, Math.abs(point.x) / (distance * aspect * .96), point.y / (distance * topLimit));
   }
   return tangent;
 }
@@ -150,7 +148,7 @@ function frameFirstPersonStage(camera, aspect, halfFov, stage) {
   halfFov = Math.max(halfFov, Math.atan(firstPersonStageTangent(camera, aspect, stage)));
   const scale = -localAnchor.z * Math.tan(halfFov);
   // Back away and narrow the lens together to preserve the foreground cannon's framing.
-  for (let distance = 4.2; distance > 0; distance -= .35) {
+  for (let distance = 4.9; distance > 0; distance -= .25) {
     camera.position.set(eye.x, eye.y + .17 * distance, eye.z + distance);
     const run = camera.position.z - anchor.z;
     const rise = anchor.y - camera.position.y;
@@ -234,10 +232,7 @@ export function makeArena(host) {
   scene.add(model);
   const scenery = new THREE.AnimationMixer(model);
   for (const clip of animations) {
-    const action = scenery.clipAction(clip);
-    if (clip.name === 'Mây trôi') action.setLoop(THREE.LoopPingPong, Infinity).setEffectiveTimeScale(.5);
-    else action.setEffectiveTimeScale(.8);
-    action.play();
+    scenery.clipAction(clip).play();
   }
   return { scene, camera, renderer, scenery };
 }

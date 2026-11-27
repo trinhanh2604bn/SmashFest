@@ -142,6 +142,23 @@ export function createImpactAudio() {
   return {
     unlock,
     clear,
+    playCombo(count) {
+      if (muted || audio?.state !== 'running') return;
+      const pitches = [523, 659, 784, 988, 1175];
+      const notes = Math.min(pitches.length, count - 1);
+      for (let i = 0; i < notes; i++) {
+        const at = audio.currentTime + i * .065;
+        const bell = audio.createOscillator();
+        const gain = audio.createGain();
+        bell.frequency.value = pitches[i];
+        gain.gain.setValueAtTime(.0001, at);
+        gain.gain.exponentialRampToValueAtTime(.1, at + .009);
+        gain.gain.exponentialRampToValueAtTime(.0001, at + .22);
+        bell.connect(gain).connect(output);
+        start([bell], at);
+        bell.stop(at + .23);
+      }
+    },
     get muted() { return muted; },
     toggle() {
       muted = !muted;

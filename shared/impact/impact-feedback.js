@@ -381,6 +381,7 @@ export function createImpactFeedback(scene) {
     unlock: sound.unlock,
     get muted() { return sound.muted; },
     toggle: sound.toggle,
+    playCombo: sound.playCombo,
     playResult(won) { sound.play(won ? 'win' : 'lose', { x: 0, strength: 1 }); },
     emit(kind, { x, y, z }, time, { strength = 1, normal, color, wood = false, grounded = false, cannon = false } = {}) {
       if (!cues[kind]) return;

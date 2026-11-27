@@ -73,7 +73,7 @@ function fittedFragments(model) {
   return parts;
 }
 
-export function createImpactPlayfield({ scene, world, floor, surfaces, feedback, deckTop, step }) {
+export function createImpactPlayfield({ scene, world, floor, surfaces, feedback, deckTop, step, onScored }) {
   const assets = new Map();
   const byBody = new Map();
   const floorDebris = new Set();
@@ -117,6 +117,8 @@ export function createImpactPlayfield({ scene, world, floor, surfaces, feedback,
     supportByBody.delete(item.body);
     for (const [upper, supports] of supportByBody) {
       if (!supports.delete(item.body)) continue;
+      const supported = byBody.get(upper);
+      if (wake && supported && item.shotId && !supported.shotId) supported.shotId = item.shotId;
       if (wake && upper.sleepState === Body.SLEEPING) upper.wakeUp();
       if (!supports.size) supportByBody.delete(upper);
     }
@@ -129,10 +131,17 @@ export function createImpactPlayfield({ scene, world, floor, surfaces, feedback,
 
   function markLanding(item, point, speed) {
     item.landedAt = time;
+    if (item.part === undefined) scoreTarget(item);
     if (landingCues.has(item.id)) return;
     landingCues.add(item.id);
     lastImpact = time;
     targetCue('ground', item, { x: point.x, y: .025, z: point.z }, Math.min(1, .32 + speed * .12));
+  }
+
+  function scoreTarget(item) {
+    if (!item.shotId || item.scored) return;
+    item.scored = true;
+    onScored?.(item.shotId);
   }
 
   function liftToFloor(body) {
@@ -207,7 +216,7 @@ export function createImpactPlayfield({ scene, world, floor, surfaces, feedback,
       });
       const view = template.clone(true);
       const item = {
-        id: target.id, asset, body, view, visual: new TargetVisual(view), part,
+        id: target.id, shotId: target.shotId, asset, body, view, visual: new TargetVisual(view), part,
         landedAt: ground ? time : null, groundShard: Boolean(ground),
         bornAt: time, restSince: null, coastSince: null, tableContactAt: -Infinity,
       };
@@ -243,6 +252,7 @@ export function createImpactPlayfield({ scene, world, floor, surfaces, feedback,
     const item = {
       id: nextId++, asset, body, view, visual: new TargetVisual(view),
       landedAt: null, chipped: false, ground: null, hit: null, neighbor: null,
+      startY: position.y, scored: false,
     };
     body.addEventListener('collide', ({ body: other, contact }) => {
       if (settling || item.landedAt !== null) return;
@@ -252,6 +262,7 @@ export function createImpactPlayfield({ scene, world, floor, surfaces, feedback,
         const impact = measureContact(contact, .25);
         if (impact && impact.energy > (item.hit?.energy ?? 0)) {
           other.hitBody = body;
+          item.shotId = other.shotId;
           other.contactAt ??= time;
           item.hit = { ...impact, ...contactCue(body, contact) };
         }
@@ -294,6 +305,16 @@ export function createImpactPlayfield({ scene, world, floor, surfaces, feedback,
         if (asleep.has(upper) && (lower === deck || asleep.has(lower))) current.add(lower);
       }
       if (current.size) supportByBody.set(upper, current);
+      const supported = byBody.get(upper);
+      if (supported && !supported.shotId) {
+        for (const lower of oldSupports) {
+          const source = byBody.get(lower);
+          if (!current.has(lower) && source?.shotId) {
+            supported.shotId = source.shotId;
+            break;
+          }
+        }
+      }
       if (upper.sleepState === Body.SLEEPING && [...oldSupports].some(lower => !current.has(lower))) {
         upper.wakeUp();
       }
@@ -325,6 +346,7 @@ export function createImpactPlayfield({ scene, world, floor, surfaces, feedback,
     const carriesLoad = [...supportByBody.values()].some(supports => supports.has(item.body));
     if (item.hit) {
       const hit = item.hit;
+      scoreTarget(item);
       item.hit = null;
       lastImpact = time;
       const breaks = item.asset.parts.length > 1 && hit.energy >= shotFractureEnergy
@@ -384,11 +406,24 @@ export function createImpactPlayfield({ scene, world, floor, surfaces, feedback,
     const asleep = new Set(world.bodies.filter(body => body.sleepState === Body.SLEEPING));
     for (const body of floorDebris) body.force.y -= body.mass * gravity * (groundFragments.gravityScale - 1);
     world.step(step);
+    // Resolve the source before a landing or a fracture consumes this frame's contact.
+    for (const item of targets) {
+      const contact = item.neighbor;
+      if (!item.shotId && contact?.neighbor.shotId && contact.energy >= .28) {
+        item.shotId = contact.neighbor.shotId;
+      }
+      if (contact?.energy >= 1 && item.shotId) scoreTarget(item);
+    }
     trackSupports(asleep);
     if (settling) return;
     const fragments = [];
     items = items.filter(item => {
       const { body } = item;
+      if (item.part === undefined && item.shotId && !item.scored) {
+        const drop = item.startY + deck.position.y - deckStartY - body.position.y;
+        const tilt = body.quaternion.x ** 2 + body.quaternion.z ** 2;
+        if (drop > item.asset.height * .28 || tilt > .12) scoreTarget(item);
+      }
       // Fast, spinning bodies can cross the plane between contact checks.
       if (item.landedAt === null && body.position.y < 0) {
         const point = { x: body.position.x, y: 0, z: body.position.z };

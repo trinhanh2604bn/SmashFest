@@ -3,6 +3,8 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { makeTableFitPreview } from './table-fit.js';
+import { createCannonFlash } from '../../shared/impact/cannon-flash.js';
+import shotUrl from '../../shared/impact/sfx/cannon.ogg?url';
 import './style.css';
 
 const get = id => document.getElementById(id);
@@ -37,7 +39,7 @@ const assets = {
   },
   beach: {
     file: 'vinh-nang.glb', type: 'BỐI CẢNH BỜ BIỂN', title: 'Vịnh Nắng',
-    description: 'Bãi cát sáng, biển xanh ngọc và hàng cọ ở hai bên. Khoảng giữa dành cho bàn và pháo Lam Kim.',
+    description: 'Cát mịn, nước xanh ngọc và bóng dừa ven bờ. Xem bố cục dọc cùng bàn và pháo Lam Kim.',
     target: [0, 1.78, 0], distance: 1.7, platform: 1, environment: true,
   },
 };
@@ -114,7 +116,7 @@ async function start() {
 
   function updateLens() {
     camera.fov = activeView === 'game'
-      ? T.MathUtils.radToDeg(2 * Math.max(Math.PI / 9, Math.atan(.49 / camera.aspect)))
+      ? T.MathUtils.radToDeg(2 * Math.max(Math.PI / 9, Math.atan(.37 / camera.aspect)))
       : camera.aspect < .83 ? 48 : 39;
     camera.updateProjectionMatrix();
   }
@@ -143,17 +145,39 @@ async function start() {
   let duration = 0;
   let elapsed = 0;
   let playing = false;
+  const muzzle = createCannonFlash();
+  const shotSound = new Audio(shotUrl);
+  shotSound.preload = 'auto';
+  shotSound.volume = .55;
+  const isFireClip = () => activeAsset === assets.cannon && action?.getClip() === animations[0];
+
+  function playShotSound() {
+    if (!isFireClip() || shotSound.muted || elapsed >= shotSound.duration) return;
+    shotSound.currentTime = elapsed;
+    shotSound.play().catch(() => {});
+  }
+  get('shot-sound').addEventListener('click', event => {
+    shotSound.muted = !shotSound.muted;
+    event.currentTarget.setAttribute('aria-pressed', String(!shotSound.muted));
+  });
+  get('fire-preview').addEventListener('click', () => {
+    selectClip(0);
+    setPlaying(true);
+  });
 
   function seek(time) {
     elapsed = T.MathUtils.clamp(time, 0, duration);
     action.time = elapsed;
     mixer.update(0);
+    muzzle.draw(isFireClip() ? elapsed : 0);
     scrub.value = elapsed;
     clock.value = `${seconds.format(elapsed)} / ${seconds.format(duration)} giây`;
   }
 
   function setPlaying(value) {
     playing = value;
+    if (playing) playShotSound();
+    else shotSound.pause();
     play.textContent = playing ? 'Tạm dừng' : elapsed >= duration ? 'Phát lại' : 'Phát chuyển động';
   }
 
@@ -227,6 +251,9 @@ async function start() {
     const request = ++selectedRequest;
     const asset = assets[key];
     activeAsset = asset;
+    muzzle.flash.removeFromParent();
+    get('cannon-trial').hidden = key !== 'cannon';
+    get('fire-preview').disabled = true;
     get('table-fit').hidden = true;
     assetButtons.forEach(button => button.setAttribute('aria-pressed', String(button.dataset.asset === key)));
     get('asset-type').textContent = asset.type;
@@ -254,6 +281,7 @@ async function start() {
     loaderText.textContent = 'Đang tải mô hình…';
     context.clear();
     const environment = Boolean(asset.environment);
+    viewport.closest('.stage').classList.toggle('beach-preview', environment);
     scene.background = environment ? new T.Color('#78c8f9') : studioBackground;
     scene.fog = environment ? null : studioFog;
     renderer.toneMappingExposure = environment ? .97 : 1.22;
@@ -283,6 +311,10 @@ async function start() {
         }
       });
       scene.add(model);
+      if (key === 'cannon') {
+        model.getObjectByName('BarrelRecoil').add(muzzle.flash);
+        get('fire-preview').disabled = false;
+      }
       if (key === 'table') {
         tableFitPreview ??= makeTableFitPreview(model);
         showFit(fitChoice);
