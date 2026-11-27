@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import {
   ballRadius, disposeGroup, frameCamera, makeArena, makeBall, makeCannon, makeTable,
-  targetWidth,
+  targetHeight, targetWidth,
 } from './arena.js';
 import { loadArenaModels } from './models.js';
 import { levels } from './levels.js';
@@ -35,10 +35,25 @@ const shotCooldown = .34;
 const readyHint = 'Chạm hoặc nhấp vào mục tiêu để bắn';
 const settlingHint = 'Hết đạn · Đang chờ vật thể dừng lại';
 
+function tableFootprint(layout) {
+  const base = layout.pieces.filter(([, tier]) => tier === 0);
+  const xs = base.map(([x]) => x * pieceGap);
+  const zs = base.map(([, , z]) => z * pieceGap);
+  const [minX, maxX] = [Math.min(...xs), Math.max(...xs)];
+  const [minZ, maxZ] = [Math.min(...zs), Math.max(...zs)];
+  const padding = targetWidth + (layout.margin ?? .22);
+  return {
+    width: Math.max(2.35, maxX - minX + padding),
+    depth: layout.depth ?? Math.max(.96, maxZ - minZ + padding),
+    x: (minX + maxX) / 2,
+    z: (minZ + maxZ) / 2,
+  };
+}
+
 async function start() {
   ui.hint.textContent = 'Đang tải mô hình 3D…';
   await loadArenaModels();
-  const { scene, camera, renderer, scenery } = makeArena(ui.arena);
+  const { scene, camera, renderer, scenery, updateClouds } = makeArena(ui.arena);
   const canvas = renderer.domElement;
   canvas.tabIndex = 0;
   canvas.setAttribute('aria-label', 'Dùng phím mũi tên để ngắm và phím cách để bắn');
@@ -139,17 +154,9 @@ async function start() {
     balls.forEach(remove);
     balls = [];
     const stage = levels[levelIndex].stages[stageIndex];
-    const { layout } = stage;
-    const footprint = layout.pieces.filter(([, tier]) => tier === 0);
-    const xs = footprint.map(([x]) => x * pieceGap);
-    const zs = footprint.map(([, , z]) => z * pieceGap);
-    const [minX, maxX] = [Math.min(...xs), Math.max(...xs)];
-    const [minZ, maxZ] = [Math.min(...zs), Math.max(...zs)];
-    const padding = targetWidth + (layout.margin ?? .22);
-    const width = Math.max(2.35, maxX - minX + padding);
-    const depth = layout.depth ?? Math.max(.96, maxZ - minZ + padding);
-    const x = (minX + maxX) / 2;
-    const z = (minZ + maxZ) / 2;
+    const { layout, cameraLayout } = stage;
+    const footprint = tableFootprint(layout);
+    const { width, depth, x, z } = footprint;
     const { view, thickness, setLift } = makeTable(width, depth, deckTop);
     const body = new CANNON.Body({
       type: stage.motion ? CANNON.Body.KINEMATIC : CANNON.Body.STATIC,
@@ -163,7 +170,7 @@ async function start() {
     playfield.reset(body);
     for (const [column, tier, row, assetIndex] of layout.pieces) {
       const index = assetIndex ?? stage.assetIndex ?? 0;
-      const height = index === 5 ? 1.18 : .8;
+      const height = index === 5 ? 1.18 : targetHeight;
       playfield.add({
         assetIndex: index,
         position: new CANNON.Vec3(column * pieceGap, deckTop + tier * tierHeight + height / 2 + .005, row * pieceGap),
@@ -196,10 +203,20 @@ async function start() {
       const { position } = target.body;
       addFrameBounds(position.x, position.y + target.asset.height / 2 + .06, position.z, targetWidth / 2, targetWidth / 2);
     }
+    const aimTop = Math.max(...framingPoints.map(point => point.y));
+    const reference = cameraLayout ? tableFootprint(cameraLayout) : footprint;
+    if (cameraLayout) {
+      // Use the three-tier composition to give the opening layouts the same lens and viewpoint.
+      addFrameBounds(reference.x, deckTop, reference.z, reference.width / 2 + .035, reference.depth / 2 + .035);
+      for (const [column, tier, row] of cameraLayout.pieces) {
+        addFrameBounds(column * pieceGap, deckTop + tier * tierHeight + targetHeight + .06, row * pieceGap, targetWidth / 2, targetWidth / 2);
+      }
+    }
     stageFrame = {
-      width,
+      width: Math.max(width, reference.width),
       depth,
       top: Math.max(...framingPoints.map(point => point.y)),
+      aimTop,
       x,
       z,
       travelX,
@@ -245,7 +262,7 @@ async function start() {
       targetPoint.copy(neutralAim);
     }
     targetPoint.x = THREE.MathUtils.clamp(targetPoint.x, -4.4, 4.4);
-    targetPoint.y = THREE.MathUtils.clamp(targetPoint.y, .12, stageFrame.top + .3);
+    targetPoint.y = THREE.MathUtils.clamp(targetPoint.y, .12, stageFrame.aimTop + .3);
     targetPoint.z = Math.min(targetPoint.z, stageFrame.z + stageFrame.depth / 2);
     cannon.aim(aimDirection.subVectors(targetPoint, pivotPosition));
     reticle.position.copy(targetPoint);
@@ -391,7 +408,6 @@ async function start() {
   }
 
   function updatePhysics() {
-    scenery.update(fixedStep);
     if (state !== 'playing') return;
     time += fixedStep;
     cannon.update(fixedStep);
@@ -517,10 +533,12 @@ async function start() {
   resize();
   new ResizeObserver(resize).observe(ui.arena);
   loadLevel(0);
-  let previous = performance.now();
+  const animationStartedAt = performance.now();
+  let previous = animationStartedAt;
   let remainder = 0;
   renderer.setAnimationLoop(now => {
-    remainder += Math.min(.075, Math.max(0, (now - previous) / 1000));
+    const delta = Math.max(0, (now - previous) / 1000);
+    remainder += Math.min(.075, delta);
     previous = now;
     while (remainder >= fixedStep) {
       updatePhysics();
@@ -535,6 +553,8 @@ async function start() {
     reticle.visible = showingAim && state === 'playing' && shots > 0;
     if (reticle.visible && time - lastShot > .16) aim();
     feedback.draw(feedback.sample(time), time);
+    scenery.update(delta);
+    updateClouds((now - animationStartedAt) / 1000);
     renderer.render(scene, camera);
   });
 }

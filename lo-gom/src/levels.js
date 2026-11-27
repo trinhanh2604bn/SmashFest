@@ -1,10 +1,11 @@
 import { impactLayouts } from '../../shared/impact/impact-layouts.js';
 
 export const levels = [
-  { name: 'Sân phơi gốm', shots: 2, stages: [{ layout: impactLayouts.single }] },
+  { name: 'Sân phơi gốm', shots: 2, stages: [{ layout: impactLayouts.single, cameraLayout: impactLayouts.tower }] },
   { name: impactLayouts.row.label, shots: 5, stages: [{
     layout: { ...impactLayouts.row, pieces: impactLayouts.row.pieces.map(([x, tier, z]) => [z, tier, -x]) },
     assetIndex: 1,
+    cameraLayout: impactLayouts.tower,
   }] },
   { name: impactLayouts.tower.label, shots: 7, stages: [{ layout: impactLayouts.tower, assetIndex: 4 }] },
   { name: impactLayouts.cascade.label, shots: 7, stages: [{ layout: impactLayouts.cascade }] },

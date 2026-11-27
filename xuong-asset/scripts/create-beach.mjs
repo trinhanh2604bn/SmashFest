@@ -176,7 +176,7 @@ function coconutFrond(length, fall, tint) {
   return geometry;
 }
 
-function palm(x, z, height, lean, turn) {
+function palm(x, z, height, lean, turn, index) {
   const trunk = new T.Group();
   trunk.position.set(x, 0, z);
   beach.add(trunk);
@@ -209,17 +209,20 @@ function palm(x, z, height, lean, turn) {
     return coconutFrond(length, upper ? .16 : .48, tint)
       .rotateZ(upper ? .38 : .09 * Math.sin(i)).rotateY(turn + i * 2.40);
   });
-  const crown = mesh(trunk, 'PalmCrown', mergeGeometries(blades), foliage);
+  const crown = new T.Group();
+  crown.name = 'PalmCrown' + index;
   crown.position.copy(point(1));
+  trunk.add(crown);
+  // Keep every set of blades anchored at the center of the crown.
+  for (let group = 0; group < 3; group++) {
+    const fronds = blades.filter((_, i) => i % 3 === group);
+    mesh(crown, `PalmFronds${index}_${group}`, mergeGeometries(fronds), foliage);
+  }
   return crown;
 }
 
 const crowns = [[-3.7,-5.8,4.55,.50,.15],[4.05,-6.35,4.95,-.70,1.2],
-  [-5.1,-7.95,3.35,.29,2.1],[5.45,-8.1,3.60,-.39,.65]].map((args,i) => {
-  const crown = palm(...args);
-  crown.name = 'PalmCrown' + i;
-  return crown;
-});
+  [-5.1,-7.95,3.35,.29,2.1],[5.45,-8.1,3.60,-.39,.65]].map((args, i) => palm(...args, i));
 
 const granite = matte('#ffffff', {vertexColors: true});
 for (const [x,z,s] of [[-3.6,-5.7,.65],[-4.3,-6.1,.88],[-2.9,-6.2,.33],
@@ -273,10 +276,18 @@ const surf = new T.AnimationClip('Sóng ven bờ', 4, [
   new T.VectorKeyframeTrack('Surf.position', [0, 1, 2, 3, 4],
     [0,0,0, 0,0,.12, 0,0,.24, 0,0,.12, 0,0,0]),
 ]);
-const breeze = new T.AnimationClip('Gió qua tán dừa', 5, crowns.map((crown,i) =>
-  new T.QuaternionKeyframeTrack(crown.name + '.quaternion', [0,1.25,2.5,3.75,5],
-    [0,.028,-.012,-.023,0].flatMap(angle => new T.Quaternion()
-      .setFromEuler(new T.Euler(angle*.4,0,angle*(i%2 ? .8 : 1))).toArray()))));
+const breezeDuration = 7;
+const breezeTimes = Array.from({ length: 17 }, (_, i) => breezeDuration * i / 16);
+const breeze = new T.AnimationClip('Gió qua tán dừa', breezeDuration, crowns.flatMap((crown, tree) =>
+  crown.children.map((fronds, group) => new T.QuaternionKeyframeTrack(fronds.name + '.quaternion', breezeTimes,
+    breezeTimes.flatMap(time => {
+      const wind = time / breezeDuration * Math.PI * 2 + tree * .8 + group * .65;
+      return new T.Quaternion().setFromEuler(new T.Euler(
+        .055 * Math.sin(wind + .9),
+        .035 * Math.sin(wind - .6),
+        .10 * Math.sin(wind) + .022 * Math.sin(2 * wind + group),
+      )).toArray();
+    })))));
 const maps = new Map([[sky,'island-sky'],[sand,'sand'],[sea,'sea']].map(([material, name]) =>
   [material, new URL('./textures/' + name + '.jpg', import.meta.url)]));
 await writeModel('vinh-nang.glb', beach, [surf, breeze], maps);

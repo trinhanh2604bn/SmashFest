@@ -192,6 +192,31 @@ export function frameCamera(camera, aspect, firstPerson, stage) {
   camera.updateProjectionMatrix();
 }
 
+function animateSkyClouds(model) {
+  const dome = model.getObjectByName('SkyDome');
+  if (!dome?.material?.map) return () => {};
+  const cloudOffset = { value: 0 };
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  dome.material = dome.material.clone();
+  dome.material.onBeforeCompile = shader => {
+    shader.uniforms.cloudOffset = cloudOffset;
+    // The approved panorama includes the sea, islands and sun. Drift the cloud band between them.
+    shader.fragmentShader = `uniform float cloudOffset;\n${shader.fragmentShader}`.replace('#include <map_fragment>', `
+      vec2 cloudUv = vMapUv;
+      float aboveHorizon = 1.0 - smoothstep(0.47, 0.494, cloudUv.y);
+      float awayFromSun = smoothstep(0.055, 0.135, abs(cloudUv.x - 0.091));
+      float islandBand = 1.0 - smoothstep(0.07, 0.11, min(abs(cloudUv.x - 0.15), abs(cloudUv.x - 0.80)));
+      float awayFromIslands = 1.0 - islandBand * smoothstep(0.445, 0.462, cloudUv.y);
+      float awayFromSeam = smoothstep(0.0, 0.055, min(cloudUv.x, 1.0 - cloudUv.x));
+      cloudUv.x += cloudOffset * aboveHorizon * awayFromSun * awayFromIslands * awayFromSeam;
+      ${THREE.ShaderChunk.map_fragment.replace('vMapUv', 'cloudUv')}
+    `);
+  };
+  return seconds => {
+    cloudOffset.value = reducedMotion.matches ? 0 : .022 * Math.sin(seconds * Math.PI / 12);
+  };
+}
+
 export function makeArena(host) {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color('#78c8f9');
@@ -234,7 +259,8 @@ export function makeArena(host) {
   for (const clip of animations) {
     scenery.clipAction(clip).play();
   }
-  return { scene, camera, renderer, scenery };
+  const updateClouds = animateSkyClouds(model);
+  return { scene, camera, renderer, scenery, updateClouds };
 }
 
 export function disposeGroup(group) {
